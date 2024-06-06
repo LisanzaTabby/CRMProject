@@ -2,7 +2,7 @@ from django.contrib import admin
 from .models import *
 # Register your models here.
 class CustomerAdmin(admin.ModelAdmin):
-    list_display = ('name', 'phone', 'email','date_created')
+    list_display = ('id','name', 'phone', 'email','date_created')
 admin.site.register(Customer, CustomerAdmin)
 class ProductAdmin(admin.ModelAdmin):
     list_display = ('name', 'price', 'category','description','date_created')
