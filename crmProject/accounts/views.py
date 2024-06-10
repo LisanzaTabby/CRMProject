@@ -3,6 +3,7 @@ from django.shortcuts import render,redirect
 from django.http import HttpResponse
 from .models import *
 from .forms import *
+from .filter import OrderFilter
 
 # Create your views here.
 def home(request):
@@ -21,14 +22,20 @@ def home(request):
 def products(request):
     products = Product.objects.all()
     return render(request, 'accounts/products.html', {'products': products})
-def customer(request,pk_test):
-    customer = Customer.objects.get(id=pk_test)
-    orders = customer.order_set.all()
-    order_count = orders.count()
+def customer(request, pk_test):
+	customer = Customer.objects.get(id=pk_test)
+	
+	orders = customer.order_set.all()
+	order_count = orders.count()
+	myFilter = OrderFilter(request.POST, queryset=orders)
+	# below code is rebuilding our orders variable to the myFilter model.queryset
+	orders = myFilter.qs
 
-    context = {'customer': customer, 'orders':orders, 'order_count':order_count}
 
-    return render (request, 'accounts/customer.html', context)
+	context = {'customer':customer,'myFilter': myFilter,'orders': orders, 'order_count': order_count}
+
+	return render(request, 'accounts/customer.html', context)
+	
 def createOrder(request, pk):
 	OrderFormSet = inlineformset_factory(Customer, Order, fields=('product', 'status'), extra=10 )
 	customer = Customer.objects.get(id=pk)
