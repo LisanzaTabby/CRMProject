@@ -8,6 +8,6 @@ class ProductAdmin(admin.ModelAdmin):
     list_display = ('name', 'price', 'category','description','date_created')
 admin.site.register(Product, ProductAdmin)
 class OrderAdmin(admin.ModelAdmin):
-    list_display = ('date_created', 'status')
+    list_display = ('date_created', 'status', 'note')
 admin.site.register(Order, OrderAdmin)
 admin.site.register(Tag)
