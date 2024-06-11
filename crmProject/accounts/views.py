@@ -4,8 +4,11 @@ from django.http import HttpResponse
 from .models import *
 from .forms import *
 from .filter import OrderFilter
-
+from django.contrib.auth import authenticate, login,logout
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 # Create your views here.
+@login_required(login_url='loginPage')
 def home(request):
     customers = Customer.objects.all()
     products = Product.objects.all()
@@ -22,6 +25,33 @@ def home(request):
 def products(request):
     products = Product.objects.all()
     return render(request, 'accounts/products.html', {'products': products})
+def registerPage(request):
+	form = CreateUserForm()
+	if request.method == 'POST':
+		form = CreateUserForm(request.POST)
+		if form.is_valid():
+			form.save()
+			user = form.cleaned_data.get('username')
+			messages.success(request, 'Account successfully created for '+user, '!')
+			return redirect('loginPage')
+	context= {'form':form}
+	return render(request, 'accounts/register.html',context)
+def loginPage(request):
+	if request.user.is_authenticated:
+		return redirect('home')
+	else:
+		if request.method == 'POST':
+			username = request.POST.get('username')
+			password = request.POST.get('password')
+			
+			user = authenticate(request, username=username, password=password)
+			if user is not None:
+				login(request, user)
+				return redirect('home')
+			else:
+				messages.info(request, 'USERNAME or PASSWORD is INCORRECT!')
+	context = {}
+	return render(request, 'accounts/login.html', context)
 def customer(request, pk_test):
 	customer = Customer.objects.get(id=pk_test)
 	
@@ -51,7 +81,7 @@ def createOrder(request, pk):
 
 	context = {'formset':formset}
 	return render(request, 'accounts/order_form.html', context)
-def createCustomer(request):
+'''def createCustomer(request):
       form = CustomerForm()
       if request.method == 'POST':
             form = CustomerForm(request.POST)
@@ -59,10 +89,11 @@ def createCustomer(request):
                   form.save()
                   return redirect('/')
             context =  {'form':form}
-            return render(request, 'accounts/customer_form.html', context)
+            return render(request, 'accounts/customer_form.html', context)'''
 def updateOrder(request, pk):
 
 	order = Order.objects.get(id=pk)
+	
 	form = OrderForm(instance=order)
 
 	if request.method == 'POST':
@@ -84,3 +115,6 @@ def deleteOrder(request, pk):
 	context = {'item':order}
 	
 	return render(request, 'accounts/delete.html', context)
+def logoutView(request):
+	logout(request)
+	return redirect('loginPage')
