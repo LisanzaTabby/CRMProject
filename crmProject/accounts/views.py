@@ -22,6 +22,9 @@ def home(request):
     context = {'customers': customers, 'products': products, 'orders': orders, 'total_customers':total_customers, 'total_orders':total_orders, 'delivered':delivered, 'pending':pending}
 
     return render(request, 'accounts/dashboard.html',context)
+def UserPage(request):
+	context = {}
+	return render(request, 'accounts/user.html', context)
 
 def products(request):
     products = Product.objects.all()
