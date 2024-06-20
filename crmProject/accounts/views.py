@@ -1,5 +1,6 @@
 from django.forms import inlineformset_factory
 from django.shortcuts import render,redirect
+from django.contrib.auth.models import Group
 from django.http import HttpResponse
 from .models import *
 from .forms import *
@@ -7,9 +8,11 @@ from .filter import OrderFilter
 from django.contrib.auth import authenticate, login,logout
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from .decorators import unauthenticated_user, allowed_users, admin_only
 
 # Create your views here.
 @login_required(login_url='loginPage')
+@admin_only
 def home(request):
     customers = Customer.objects.all()
     products = Product.objects.all()
@@ -25,10 +28,13 @@ def home(request):
 def UserPage(request):
 	context = {}
 	return render(request, 'accounts/user.html', context)
-
+@login_required(login_url='loginPage')
+@allowed_users(allowed_roles=['admin'])
 def products(request):
+	
     products = Product.objects.all()
     return render(request, 'accounts/products.html', {'products': products})
+@unauthenticated_user
 def registerPage(request):
 	form = CreateUserForm()
 	if request.method == 'POST':
@@ -40,22 +46,22 @@ def registerPage(request):
 			return redirect('loginPage')
 	context= {'form':form}
 	return render(request, 'accounts/register.html',context)
+@unauthenticated_user
 def loginPage(request):
-	if request.user.is_authenticated:
-		return redirect('home')
-	else:
-		if request.method == 'POST':
-			username = request.POST.get('username')
-			password = request.POST.get('password')
+	if request.method == 'POST':
+		username = request.POST.get('username')
+		password = request.POST.get('password')
 			
-			user = authenticate(request, username=username, password=password)
-			if user is not None:
-				login(request, user)
-				return redirect('home')
-			else:
-				messages.info(request, 'USERNAME or PASSWORD is INCORRECT!')
+		user = authenticate(request, username=username, password=password)
+		if user is not None:
+			login(request, user)
+			return redirect('home')
+		else:
+			messages.info(request, 'USERNAME or PASSWORD is INCORRECT!')
 	context = {}
 	return render(request, 'accounts/login.html', context)
+@login_required(login_url='loginPage')
+@allowed_users(allowed_roles=['admin'])
 def customer(request, pk_test):
 	customer = Customer.objects.get(id=pk_test)
 	
@@ -69,7 +75,8 @@ def customer(request, pk_test):
 	context = {'customer':customer,'myFilter': myFilter,'orders': orders, 'order_count': order_count}
 
 	return render(request, 'accounts/customer.html', context)
-	
+@login_required(login_url='loginPage')
+@allowed_users(allowed_roles=['admin'])
 def createOrder(request, pk):
 	OrderFormSet = inlineformset_factory(Customer, Order, fields=('product', 'status'), extra=10 )
 	customer = Customer.objects.get(id=pk)
@@ -94,6 +101,8 @@ def createOrder(request, pk):
                   return redirect('/')
             context =  {'form':form}
             return render(request, 'accounts/customer_form.html', context)'''
+@login_required(login_url='loginPage')
+@allowed_users(allowed_roles=['admin'])
 def updateOrder(request, pk):
 
 	order = Order.objects.get(id=pk)
@@ -109,7 +118,8 @@ def updateOrder(request, pk):
 	context = {'form':form}
 	
 	return render(request, 'accounts/order_form.html', context)
-
+@login_required(login_url='loginPage')
+@allowed_users(allowed_roles=['admin'])
 def deleteOrder(request, pk):
 	order = Order.objects.get(id=pk)
 	if request.method == "POST":
