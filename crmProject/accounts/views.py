@@ -40,9 +40,12 @@ def registerPage(request):
 	if request.method == 'POST':
 		form = CreateUserForm(request.POST)
 		if form.is_valid():
-			form.save()
-			user = form.cleaned_data.get('username')
-			messages.success(request, 'Account successfully created for '+user, '!')
+			user= form.save()
+			username = form.cleaned_data.get('username')
+#associating a registering user with a system role of customer
+			group = Group.objects.get(name='customer')
+			user.groups.add(group)
+			messages.success(request, 'Account successfully created for '+username, '!')
 			return redirect('loginPage')
 	context= {'form':form}
 	return render(request, 'accounts/register.html',context)
